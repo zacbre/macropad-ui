@@ -55,7 +55,11 @@ fn change_volume(application: String, volume: Volume, force: bool) -> Result<(),
     Ok(())
 }
 
-pub fn start_hid_thread(items: Arc<RwLock<HashMap<u16, String>>>) -> Result<(), anyhow::Error> {
+pub fn start_hid_thread(items: Arc<RwLock<HashMap<u16, String>>>, connected: Arc<RwLock<bool>>) -> Result<(), anyhow::Error> {
+    {
+        let mut conn = connected.write().unwrap();
+        *conn = false;
+    }
     unsafe {
         CoInitialize(None).unwrap();
     }
@@ -85,6 +89,10 @@ pub fn start_hid_thread(items: Arc<RwLock<HashMap<u16, String>>>) -> Result<(), 
                 continue;
             }
         };
+        {
+            let mut conn = connected.write().unwrap();
+            *conn = true;
+        }
         //device.set_blocking_mode(false)?;
         match communicate_with_device(&device, &gpu, &items) {
             Err(_e) => continue,

@@ -1,68 +1,38 @@
 <script setup lang="ts">
 import {Ref, ref} from "vue";
 import { invoke } from "@tauri-apps/api/tauri";
+import router from "../routes";
+import mappings from "../mappings";
 
-type ApplicationItem = {
-  [key: number]: string
-};
+const props = defineProps(['apps'])
+const emit = defineEmits(['refresh']);
 
 type MappingItem = {
   [key: number]: string
 }
 
-const apps: Ref<ApplicationItem> = ref({});
-const mappings: Ref<MappingItem> = ref({
-  0x00C0: "FN0",
-  0x00C1: "FN1",
-  0x00C2: "FN2",
-  0x00C3: "FN3",
-  0x00C4: "FN4",
-  0x00C5: "FN5",
-  0x00C6: "FN6",
-  0x00C7: "FN7",
-  0x00C8: "FN8",
-  0x00C9: "FN9",
-  0x00CA: "FN10",
-  0x00CB: "FN11",
-  0x00CC: "FN12",
-  0x00CD: "FN13",
-  0x00CE: "FN14",
-  0x00CF: "FN15",
-  0x00D0: "FN16",
-  0x00D1: "FN17",
-  0x00D2: "FN18",
-  0x00D3: "FN19",
-  0x00D4: "FN20",
-  0x00D5: "FN21",
-  0x00D6: "FN22",
-  0x00D7: "FN23",
-  0x00D8: "FN24",
-  0x00D9: "FN25",
-  0x00DA: "FN26",
-  0x00DB: "FN27",
-  0x00DC: "FN28",
-  0x00DD: "FN29",
-  0x00DE: "FN30",
-  0x00DF: "FN31"
-});
-
-async function get_apps() {
-  apps.value = await invoke('get_apps');
-}
-
 function getMapping(number: number) {
-  return mappings.value[number];
+  return mappings[number];
 }
 
 async function clear(number: number) {
   await invoke('set_mapping', {'mapping': { 'key': +number, 'value': "" }});
-  await get_apps();
+  emit('refresh');
+}
+
+async function manual(number: number) {
+  let app = prompt("Manually specify the application name:", props.apps[number]);
+  if (app == null || app == "") {
+    return;
+  }
+  await invoke('set_mapping', {'mapping': { 'key': +number, 'value': app }});
+  emit('refresh');
 }
 
 async function setMapping(number: number) {
-  if (apps.value == null) {
-    return;
-  }
+  await router.push({'name': 'processes', 'params': { "id": number }});
+
+  /*let app = "";
 
   let app = prompt("Set the application name.", apps.value[number]);
   console.log(app);
@@ -70,7 +40,7 @@ async function setMapping(number: number) {
     return;
   }
   await invoke('set_mapping', {'mapping': { 'key': +number, 'value': app }});
-  await get_apps();
+  await get_apps();*/
 }
 
 function determineClass(val: string) {
@@ -93,14 +63,13 @@ function determineValue(val: string) {
   }
   return val;
 }
-
-get_apps();
 </script>
 
 <template>
   <ul v-if="apps !== null">
     <li v-for="(val, key) in apps" :key="key">
       <div @click="setMapping(key)" class="keyboard-key">
+        <span @click.stop="manual(key)" class="manual"><i class="fa fa-edit"></i></span>
         <span @click.stop="clear(key)" class="clear"><i class="fa fa-x"></i></span>
         <p class="title">{{ getMapping(key) }}</p>
         <p :class="determineClass(val)">{{ determineValue(val) }}<span class="tooltiptext" v-if="val.length > 20">{{ val }}</span></p>
@@ -133,6 +102,13 @@ get_apps();
     position: relative;
   }
 
+  div.keyboard-key span.manual {
+    position: absolute;
+    top: 0;
+    left: 4px;
+    font-size: 9px;
+  }
+
   div.keyboard-key span.clear {
     position: absolute;
     top: 0;
@@ -146,6 +122,7 @@ get_apps();
 
   div.keyboard-key p {
     margin: 10px 0;
+    word-break: break-all;
   }
 
   div.keyboard-key p.title {

@@ -6,6 +6,9 @@
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use serde::{Serialize, Deserialize};
+use sysinfo::Signal::Sys;
+use sysinfo::{ProcessExt, System, SystemExt};
+use crate::audio::AudioEndpoint;
 
 mod audio;
 mod error;
@@ -20,13 +23,28 @@ macro_rules! collection {
 }
 
 struct State {
-    pub proc_list: Arc<RwLock<HashMap<u16, String>>>
+    pub proc_list: Arc<RwLock<HashMap<u16, String>>>,
+    pub connected: Arc<RwLock<bool>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Mapping {
     pub key: u16,
     pub value: String
+}
+
+#[tauri::command]
+fn get_process_list() -> Vec<String> {
+    if let Ok(audio_endpoints) = audio::enumerate_applications() {
+        audio_endpoints.into_iter().map(|p| p.name).collect::<Vec<String>>()
+    } else {
+        vec![]
+    }
+}
+
+#[tauri::command]
+fn get_connected_state(state: tauri::State<State>) -> bool {
+    state.connected.read().unwrap().clone()
 }
 
 #[tauri::command]
@@ -80,13 +98,18 @@ fn main() {
         0x00DF => String::default(),
     };
     let proc_list: Arc<RwLock<HashMap<u16, String>>> = Arc::new(RwLock::new(items));
+    let state = State { 
+        proc_list: proc_list.clone(),
+        connected: Arc::new(RwLock::new(false)),
+    };
 
     // start a separate thread to listen for HID stuff.
-    let cloned_proc_list = proc_list.clone();
-    std::thread::spawn(move || hid::start_hid_thread(cloned_proc_list));
+    let cloned_proc_list = state.proc_list.clone();
+    let cloned_connected = state.connected.clone();
+    std::thread::spawn(move || hid::start_hid_thread(cloned_proc_list, cloned_connected));
     tauri::Builder::default()
-        .manage(State{ proc_list: proc_list.clone() })
-        .invoke_handler(tauri::generate_handler![get_apps, set_mapping])
+        .manage(state)
+        .invoke_handler(tauri::generate_handler![get_apps, set_mapping, get_connected_state, get_process_list])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

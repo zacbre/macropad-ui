@@ -14,6 +14,10 @@
   -webkit-text-size-adjust: 100%;
 }
 
+:root {
+  --color-text: rgba(235, 235, 235, 0.64);
+}
+
 .container {
   margin: 0;
   display: flex;
@@ -98,4 +102,61 @@ button {
     color: #ffffff;
     background-color: #0f0f0f98;
   }
+}
+
+
+button {
+  border-radius: 3px;
+  background-color: #202020;
+  border: 1px solid #303030;
+  box-sizing: border-box;
+  padding: 5px 10px;
+  color: var(--color-text);
+}
+
+input[type=text] {
+  background-color: #282828;
+  border: 1px solid #202020;
+  padding: 5px 8px;
+  font-size: 16px;
+  display: block;
+  color: var(--color-text);
+  outline: none;
+  border-radius: 3px;
+}
+
+select {
+  background-color: #282828;
+  border: 1px solid #202020;
+  padding: 5px;
+  font-size: 16px;
+  display: block;
+  color: var(--color-text);
+  outline: none;
+}
+
+.styled-table {
+  border-collapse: collapse;
+  margin: 25px 0;
+  font-size: 0.9em;
+  min-width: 400px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+.styled-table thead {
+  background-color: #222;
+}
+
+.styled-table thead th {
+  font-weight: bold;
+}
+
+.styled-table th,
+.styled-table td {
+  padding: 12px 15px;
+}
+
+.styled-table tbody tr:nth-of-type(even) {
+  background-color: #252525;
 }
