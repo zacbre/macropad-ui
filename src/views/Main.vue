@@ -8,10 +8,15 @@ type ApplicationItem = {
   [key: number]: string
 };
 
-const apps: Ref<ApplicationItem> = ref({});
+type Settings = {
+  proc_list: ApplicationItem,
+  setting_item_1: boolean
+}
+
+const settings: Ref<Settings | null> = ref(null);
 
 async function getApps() {
-  apps.value = await invoke('get_apps');
+  settings.value = await invoke('get_apps');
 }
 getApps();
 </script>
@@ -19,7 +24,7 @@ getApps();
 <template>
   <h1>Macropad-UI</h1>
   <Connected />
-  <MacropadItem :apps="apps" @refresh="() => getApps()"/>
+  <MacropadItem :settings="settings" @refresh="() => getApps()"/>
 </template>
 
 <style scoped>

@@ -26,6 +26,18 @@ impl From<anyhow::Error> for HidError {
     }
 }
 
+impl From<serde_json::Error> for HidError {
+    fn from(value: serde_json::Error) -> Self {
+        HidError::new(value.to_string())
+    }
+}
+
+impl From<std::io::Error> for HidError {
+    fn from(value: std::io::Error) -> Self {
+        HidError::new(value.to_string())
+    }
+}
+
 impl From<NvmlError> for HidError {
     fn from(value: NvmlError) -> Self {
         HidError::new(value.to_string())

@@ -15,11 +15,12 @@ async function getConnected() {
   connected.value = await invoke('get_connected_state');
 }
 getConnected()
+setInterval(getConnected, 2000);
 </script>
 
 <template>
   <div>
-    <p :class="connected.value ? 'green' : 'red'">{{ connectedState }}</p>
+    <p :class="connected === true ? 'green' : 'red'">{{ connectedState }}</p>
   </div>
 </template>
 
@@ -29,6 +30,7 @@ getConnected()
     top: 0;
     right: 25px;
   }
+
   p.green {
     color: green;
   }

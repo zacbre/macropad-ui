@@ -6,7 +6,7 @@ use hidapi::{DeviceInfo, HidApi, HidDevice};
 use nvml_wrapper::{Device, Nvml};
 use sysinfo::{CpuExt, System, SystemExt};
 use windows::Win32::System::Com::CoInitialize;
-use crate::audio;
+use crate::{audio, Settings};
 use crate::audio::AudioEndpoint;
 use crate::error::HidError;
 use crate::packet::{Packet, PacketHeader};
@@ -55,11 +55,7 @@ fn change_volume(application: String, volume: Volume, force: bool) -> Result<(),
     Ok(())
 }
 
-pub fn start_hid_thread(items: Arc<RwLock<HashMap<u16, String>>>, connected: Arc<RwLock<bool>>) -> Result<(), anyhow::Error> {
-    {
-        let mut conn = connected.write().unwrap();
-        *conn = false;
-    }
+pub fn start_hid_thread(settings: Arc<RwLock<Settings>>, connected: Arc<RwLock<bool>>) -> Result<(), anyhow::Error> {
     unsafe {
         CoInitialize(None).unwrap();
     }
@@ -68,6 +64,10 @@ pub fn start_hid_thread(items: Arc<RwLock<HashMap<u16, String>>>, connected: Arc
     println!("Printing all available hid devices:");
 
     loop {
+        {
+            let mut conn = connected.write().unwrap();
+            *conn = false;
+        }
         let api = HidApi::new().expect("Cannot create HidAPI");
         let mut p_device: Option<&DeviceInfo> = None;
         for device in api.device_list() {
@@ -94,14 +94,14 @@ pub fn start_hid_thread(items: Arc<RwLock<HashMap<u16, String>>>, connected: Arc
             *conn = true;
         }
         //device.set_blocking_mode(false)?;
-        match communicate_with_device(&device, &gpu, &items) {
+        match communicate_with_device(&device, &gpu, &settings) {
             Err(_e) => continue,
             _ => {}
         }
     }
 }
 
-fn communicate_with_device(device: &HidDevice, gpu: &Device, items: &Arc<RwLock<HashMap<u16, String>>>) -> Result<(), HidError> {
+fn communicate_with_device(device: &HidDevice, gpu: &Device, settings: &Arc<RwLock<Settings>>) -> Result<(), HidError> {
     let mut sys = System::new_all();
     let mut now = Instant::now();
     loop {
@@ -114,9 +114,9 @@ fn communicate_with_device(device: &HidDevice, gpu: &Device, items: &Arc<RwLock<
                         println!("Get volume!");
                         let raw = p.raw();
                         let application: u16 = u16::from(raw[1]) << 8 | u16::from(raw[0]);
-                        let apps = items.read().unwrap();
-                        if apps.contains_key(&application) {
-                            let application_title = apps[&application].clone();
+                        let apps = settings.read().unwrap();
+                        if apps.proc_list.contains_key(&application) {
+                            let application_title = apps.proc_list[&application].clone();
                             let volume = get_volume(format!("{}.exe", application_title));
                             let mut app = application_title.as_bytes().to_vec();
                             if volume.is_ok() {
@@ -140,14 +140,14 @@ fn communicate_with_device(device: &HidDevice, gpu: &Device, items: &Arc<RwLock<
                         println!("Changing volume!");
                         let raw = p.raw();
                         let application: u16 = u16::from(raw[1]) << 8 | u16::from(raw[0]);
-                        let apps = items.read().unwrap();
+                        let apps = settings.read().unwrap();
                         let volume_up_or_down = if raw[2] == Volume::Up as u8 {
                             Volume::Up
                         } else {
                             Volume::Down
                         };
-                        if apps.contains_key(&application) {
-                            let application_title = format!("{}.exe", apps[&application]);
+                        if apps.proc_list.contains_key(&application) {
+                            let application_title = format!("{}.exe", apps.proc_list[&application]);
                             println!("Changing volume {:?} on {}!", volume_up_or_down, application_title);
                             let force = p.header == PacketHeader::ForceVolume;
                             change_volume(application_title, volume_up_or_down, force)?;

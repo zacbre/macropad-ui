@@ -21,6 +21,7 @@ hidapi = "1.4.2"
 anyhow = "1.0"
 sysinfo = "0.27.0"
 nvml-wrapper = "0.8.0"
+directories = "4.0.1"
 
 [dependencies.windows]
 version = "0.43.0"

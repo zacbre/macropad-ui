@@ -4,12 +4,8 @@ import { invoke } from "@tauri-apps/api/tauri";
 import router from "../routes";
 import mappings from "../mappings";
 
-const props = defineProps(['apps'])
+const props = defineProps(['settings'])
 const emit = defineEmits(['refresh']);
-
-type MappingItem = {
-  [key: number]: string
-}
 
 function getMapping(number: number) {
   return mappings[number];
@@ -21,7 +17,7 @@ async function clear(number: number) {
 }
 
 async function manual(number: number) {
-  let app = prompt("Manually specify the application name:", props.apps[number]);
+  let app = prompt("Manually specify the application name:", props.settings.proc_list[number]);
   if (app == null || app == "") {
     return;
   }
@@ -31,16 +27,6 @@ async function manual(number: number) {
 
 async function setMapping(number: number) {
   await router.push({'name': 'processes', 'params': { "id": number }});
-
-  /*let app = "";
-
-  let app = prompt("Set the application name.", apps.value[number]);
-  console.log(app);
-  if (app == null || app == "") {
-    return;
-  }
-  await invoke('set_mapping', {'mapping': { 'key': +number, 'value': app }});
-  await get_apps();*/
 }
 
 function determineClass(val: string) {
@@ -66,8 +52,8 @@ function determineValue(val: string) {
 </script>
 
 <template>
-  <ul v-if="apps !== null">
-    <li v-for="(val, key) in apps" :key="key">
+  <ul v-if="settings !== null">
+    <li v-for="(val, key) in settings.proc_list" :key="key">
       <div @click="setMapping(key)" class="keyboard-key">
         <span @click.stop="manual(key)" class="manual"><i class="fa fa-edit"></i></span>
         <span @click.stop="clear(key)" class="clear"><i class="fa fa-x"></i></span>
