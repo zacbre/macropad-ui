@@ -159,9 +159,12 @@ fn communicate_with_device(device: &HidDevice, gpu: &Device, settings: &Arc<RwLo
             Err(_) => ()
         }
         if now.elapsed() >= std::time::Duration::from_secs(1) {
-            send_stats(&mut sys, &device, &gpu)?;
-            println!("Send stats!");
-            now = Instant::now();
+            let set = settings.read().unwrap();
+            if set.show_stats {
+                send_stats(&mut sys, &device, &gpu)?;
+                println!("Send stats!");
+                now = Instant::now();
+            }
         }
     }
 }

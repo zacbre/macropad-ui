@@ -5,6 +5,9 @@ import { RouterLink, RouterView } from "vue-router";
 <template>
   <div class="container">
     <RouterView />
+    <div class="copyright">
+      <p>Macropad-UI by <a href="https://github.com/zacbre" target="_blank">zacbre</a></p>
+    </div>
   </div>
 </template>
 
@@ -15,5 +18,14 @@ import { RouterLink, RouterView } from "vue-router";
 
 .logo.vue:hover {
   filter: drop-shadow(0 0 2em #249b73);
+}
+.copyright p {
+  margin: 10px 0 0 0;
+}
+.copyright {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
 }
 </style>

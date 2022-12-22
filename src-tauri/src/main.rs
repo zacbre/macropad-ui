@@ -9,6 +9,7 @@ use directories::ProjectDirs;
 use serde::{Serialize, Deserialize};
 use sysinfo::Signal::Sys;
 use sysinfo::{ProcessExt, System, SystemExt};
+use tauri::{CustomMenuItem, GlobalWindowEvent, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem, Window, WindowEvent, WindowUrl, Wry};
 use crate::audio::AudioEndpoint;
 use crate::error::HidError;
 
@@ -32,7 +33,7 @@ pub struct State {
 #[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub struct Settings {
     pub proc_list: HashMap<u16, String>,
-    pub setting_item_1: bool,
+    pub show_stats: bool,
 }
 
 impl Settings {
@@ -85,7 +86,7 @@ impl Settings {
 
         Settings {
             proc_list: items,
-            setting_item_1: true,
+            show_stats: true,
         }
     }
 
@@ -144,6 +145,20 @@ fn set_mapping(state: tauri::State<State>, mapping: Mapping) {
     // save
 }
 
+#[tauri::command]
+async fn open_window(handle: tauri::AppHandle, url: String) {
+    tauri::WindowBuilder::new(
+        &handle,
+            "via",
+            WindowUrl::App(url.into())
+        )
+        .title("Via")
+        .center()
+        .inner_size(900.0, 900.0)
+        .build()
+        .unwrap();
+}
+
 fn main() {
     // import the hashmap via json file.
     let settings = match Settings::import_json() {
@@ -166,9 +181,65 @@ fn main() {
     let cloned_settings = state.settings.clone();
     let cloned_connected = state.connected.clone();
     std::thread::spawn(move || hid::start_hid_thread(cloned_settings, cloned_connected));
+
+    let tray_settings = state.settings.clone();
+    let mut show_stats = CustomMenuItem::new("show_stats".to_string(), "Send Stats to Macropad");
+    {
+        show_stats.selected = tray_settings.write().unwrap().show_stats;
+    }
+    let tray_menu = SystemTrayMenu::new()
+        .add_item(show_stats)
+        .add_item(CustomMenuItem::new("quit".to_string(), "Quit"));
+
     tauri::Builder::default()
         .manage(state)
-        .invoke_handler(tauri::generate_handler![get_apps, set_mapping, get_connected_state, get_process_list])
+        .setup(|app| {
+            let window = app.get_window("main").unwrap();
+            let cloned_window = window.clone();
+            window.on_window_event(move |event| match event {
+                WindowEvent::CloseRequested {
+                    api,
+                    ..
+                } => {
+                    cloned_window.hide();
+                    api.prevent_close();
+                }
+                _ => {}
+            });
+            Ok(())
+        })
+        .on_system_tray_event(move |app, event| match event {
+            SystemTrayEvent::DoubleClick {
+                position: _,
+                size: _,
+                ..
+            } => {
+                // shown/hidden
+                let window = app.get_window("main");
+                if let Some(w) = window {
+                    if !w.is_visible().unwrap() {
+                        w.show();
+                    }
+                }
+            },
+            SystemTrayEvent::MenuItemClick { id, .. } => {
+                match id.as_str() {
+                    "quit" => {
+                        std::process::exit(0);
+                    }
+                    "show_stats" => {
+                        let mut settings = tray_settings.write().unwrap();
+                        settings.show_stats = !settings.show_stats;
+                        app.tray_handle().get_item("show_stats").set_selected(settings.show_stats);
+                        settings.save_json();
+                    }
+                    _ => {}
+                }
+            }
+            _ => ()
+        })
+        .system_tray(SystemTray::new().with_menu(tray_menu))
+        .invoke_handler(tauri::generate_handler![get_apps, set_mapping, get_connected_state, get_process_list, open_window])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

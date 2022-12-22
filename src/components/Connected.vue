@@ -11,6 +11,10 @@ const connectedState = computed(() => {
   return "Not Connected to Macropad!";
 });
 
+async function openWindow() {
+  await invoke('open_window', { 'url': '/via/index.html' });
+}
+
 async function getConnected() {
   connected.value = await invoke('get_connected_state');
 }
@@ -19,16 +23,24 @@ setInterval(getConnected, 2000);
 </script>
 
 <template>
-  <div>
-    <p :class="connected === true ? 'green' : 'red'">{{ connectedState }}</p>
+  <div class="left">
+    <p><a @click="openWindow">Open Via</a></p>
+  </div>
+  <div class="right">
+    <p :class="connected === true ? 'green' : 'red'">{{connectedState}}</p>
   </div>
 </template>
 
 <style scoped>
-  div {
+  div.left {
     position: absolute;
     top: 0;
-    right: 25px;
+    left: 23px;
+  }
+  div.right {
+    position: absolute;
+    top: 0;
+    right: 23px;
   }
 
   p.green {
@@ -37,5 +49,9 @@ setInterval(getConnected, 2000);
 
   p.red {
     color: red;
+  }
+
+  a {
+    cursor: pointer;
   }
 </style>
