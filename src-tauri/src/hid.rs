@@ -174,28 +174,26 @@ fn send_stats(sys: &mut System, device: &HidDevice, gpu: &Device) -> Result<(), 
     sys.refresh_memory();
     sys.refresh_processes();
     let total_mem_percentage = ((sys.used_memory() as f64 / sys.total_memory() as f64) * 100.0).round();
-    //println!("Mem Usage: {}%", total_mem_percentage);
-    // send packet with mem usage.
-    let mem_packet = Packet::new(PacketHeader::MemUsage, (total_mem_percentage as u8).to_be_bytes().to_vec());
-    send_packet(device, mem_packet)?;
 
     let mut total_cpu_usage = 0.0;
     for cpu in sys.cpus() {
         total_cpu_usage += cpu.cpu_usage();
     }
     total_cpu_usage = (total_cpu_usage / sys.cpus().len() as f32).round();
-    //println!("CPU Usage: {}%", total_cpu_usage);
-    let cpu_packet = Packet::new(PacketHeader::CpuUsage, (total_cpu_usage as u8).to_be_bytes().to_vec());
-    send_packet(device, cpu_packet)?;
 
     let process_len = sys.processes().len();
-    //println!("Process Count: {}", process_len);
-    let process_len_packet = Packet::new(PacketHeader::ProcessCount, (process_len as u16).to_be_bytes().to_vec());
-    send_packet(device, process_len_packet)?;
 
     let gpu_usage = gpu.utilization_rates()?;
-    let gpu_usage_packet = Packet::new(PacketHeader::GpuUtilization, (gpu_usage.gpu as u8).to_be_bytes().to_vec());
-    send_packet(device, gpu_usage_packet)?;
+
+    let mut buff: Vec<u8> = Vec::new();
+    buff.push(total_cpu_usage as u8);
+    buff.push(total_mem_percentage as u8);
+    buff.push((process_len >> 8) as u8);
+    buff.push((process_len >> 0) as u8);
+    buff.push(gpu_usage.gpu as u8);
+
+    let stats = Packet::new(PacketHeader::Stats, buff);
+    send_packet(device, stats)?;
 
     Ok(())
 }

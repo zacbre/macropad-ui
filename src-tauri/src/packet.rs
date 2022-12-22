@@ -5,39 +5,30 @@ const PACKET_INIT: u8 = 0x69;
 #[repr(u8)]
 #[derive(PartialEq, Debug)]
 pub enum PacketHeader {
-    CpuUsage = 0x01,
-    MemUsage = 0x02,
-    ProcessCount = 0x03,
     ChangeVolume = 0x04,
     GetVolume = 0x05,
     ForceVolume = 0x06,
-    GpuUtilization = 0x07,
+    Stats = 0x08,
     Unknown = 0xFF,
 }
 
 impl PacketHeader {
     pub fn from_u8(byte: u8) -> PacketHeader {
         match byte {
-            0x01 => PacketHeader::CpuUsage,
-            0x02 => PacketHeader::MemUsage,
-            0x03 => PacketHeader::ProcessCount,
             0x04 => PacketHeader::ChangeVolume,
             0x05 => PacketHeader::GetVolume,
             0x06 => PacketHeader::ForceVolume,
-            0x07 => PacketHeader::GpuUtilization,
+            0x08 => PacketHeader::Stats,
             _ => PacketHeader::Unknown
         }
     }
 
     pub fn into_u8(&self) -> u8 {
         match self {
-            PacketHeader::CpuUsage => 0x01,
-            PacketHeader::MemUsage => 0x02,
-            PacketHeader::ProcessCount => 0x03,
             PacketHeader::ChangeVolume => 0x04,
             PacketHeader::GetVolume => 0x05,
             PacketHeader::ForceVolume => 0x06,
-            PacketHeader::GpuUtilization => 0x07,
+            PacketHeader::Stats => 0x08,
             PacketHeader::Unknown => 0xFF,
         }
     }
