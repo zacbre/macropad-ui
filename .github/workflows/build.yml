@@ -19,7 +19,7 @@ jobs:
     - name: Setup Node.js environment
       uses: actions/setup-node@v3.5.1
       with:
-        node-version: 12.x
+        node-version: 19.2.0
         architecture: x64
     - name: Install Tauri
       run: npm install
