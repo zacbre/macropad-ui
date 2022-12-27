@@ -1,10 +1,10 @@
 [package]
 name = "macropad-ui"
-version = "0.0.0"
-description = "A Tauri App"
-authors = ["you"]
+version = "1.0.0"
+description = "Macropad-UI"
+authors = ["zacbre"]
 license = ""
-repository = ""
+repository = "https://github.com/zacbre/macropad-ui"
 edition = "2021"
 rust-version = "1.57"
 
