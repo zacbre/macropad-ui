@@ -24,7 +24,7 @@ jobs:
     - name: Install Tauri
       run: npm install
     - name: Build
-      run: npm tauri build
+      run: npm run tauri build
     - name: Create Release Draft
       id: create_release
       uses: actions/create-release@v1
