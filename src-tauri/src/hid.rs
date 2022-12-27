@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 use hidapi::{DeviceInfo, HidApi, HidDevice};
 use nvml_wrapper::{Device, Nvml};
 use sysinfo::{CpuExt, System, SystemExt};
+#[cfg(windows)]
 use windows::Win32::System::Com::CoInitialize;
 use crate::{audio, Settings};
 use crate::audio::AudioEndpoint;
@@ -18,6 +19,7 @@ enum Volume {
     Down = 0x00,
 }
 
+#[cfg(windows)]
 fn get_volume(application: String) -> Result<f32, anyhow::Error> {
     println!("Getting volume for: {:?}", application);
     let applications = audio::enumerate_applications()?;
@@ -30,6 +32,7 @@ fn get_volume(application: String) -> Result<f32, anyhow::Error> {
     Err(anyhow::Error::msg("Cannot find running application!"))
 }
 
+#[cfg(windows)]
 fn change_volume(application: String, volume: Volume, force: bool) -> Result<(), anyhow::Error> {
     let applications = audio::enumerate_applications()?;
     let processes = applications.iter().filter(|p| p.name.to_lowercase() == application).collect::<Vec<&AudioEndpoint>>();
@@ -55,10 +58,30 @@ fn change_volume(application: String, volume: Volume, force: bool) -> Result<(),
     Ok(())
 }
 
-pub fn start_hid_thread(settings: Arc<RwLock<Settings>>, connected: Arc<RwLock<bool>>) -> Result<(), anyhow::Error> {
+#[cfg(unix)]
+fn get_volume(application: String) -> Result<f32, anyhow::Error> {
+    Ok(1.)
+}
+
+#[cfg(unix)]
+fn change_volume(application: String, volume: Volume, force: bool) -> Result<(), anyhow::Error> {
+    Ok(())
+}
+
+#[cfg(windows)]
+fn co_initialize() {
     unsafe {
         CoInitialize(None).unwrap();
     }
+}
+
+#[cfg(unix)]
+fn co_initialize() {
+    
+}
+
+pub fn start_hid_thread(settings: Arc<RwLock<Settings>>, connected: Arc<RwLock<bool>>) -> Result<(), anyhow::Error> {
+    co_initialize();
     let nvml = Nvml::init()?;
     let gpu = nvml.device_by_index(0)?;
     println!("Printing all available hid devices:");
