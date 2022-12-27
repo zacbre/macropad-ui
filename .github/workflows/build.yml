@@ -22,7 +22,7 @@ jobs:
         node-version: 12.x
         architecture: x64
     - name: Install Tauri
-      run: npm install && cargo install tauri
+      run: npm install
     - name: Build
       run: npm tauri build
     - name: Create Release Draft
