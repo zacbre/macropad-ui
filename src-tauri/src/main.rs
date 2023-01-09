@@ -5,6 +5,7 @@
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
+use auto_launch::AutoLaunchBuilder;
 use directories::ProjectDirs;
 use serde::{Serialize, Deserialize};
 use sysinfo::Signal::Sys;
@@ -142,7 +143,6 @@ fn set_mapping(state: tauri::State<State>, mapping: Mapping) {
         let settings = state.settings.read().unwrap();
         settings.save_json();
     }
-    // save
 }
 
 #[tauri::command]
@@ -160,6 +160,14 @@ async fn open_window(handle: tauri::AppHandle, url: String) {
 }
 
 fn main() {
+    let auto = AutoLaunchBuilder::new()
+        .set_app_name("Macropad-UI")
+        .set_app_path(std::env::current_exe().unwrap().to_str().unwrap())
+        .build()
+        .unwrap();
+
+    auto.enable().unwrap();
+
     // import the hashmap via json file.
     let settings = match Settings::import_json() {
         Ok(r) => r,

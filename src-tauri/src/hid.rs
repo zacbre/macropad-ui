@@ -102,7 +102,7 @@ pub fn start_hid_thread(settings: Arc<RwLock<Settings>>, connected: Arc<RwLock<b
 }
 
 fn communicate_with_device(device: &HidDevice, gpu: &Device, settings: &Arc<RwLock<Settings>>) -> Result<(), HidError> {
-    let mut sys = System::new_all();
+    let mut sys = System::new();
     let mut now = Instant::now();
     loop {
         let packet = recv_packet(&device);
@@ -154,7 +154,7 @@ fn communicate_with_device(device: &HidDevice, gpu: &Device, settings: &Arc<RwLo
                         }
                     },
                     _ => ()
-                };
+                }; 
             }
             Err(_) => ()
         }
@@ -163,6 +163,10 @@ fn communicate_with_device(device: &HidDevice, gpu: &Device, settings: &Arc<RwLo
             if set.show_stats {
                 send_stats(&mut sys, &device, &gpu)?;
                 println!("Send stats!");
+                //println!("Component size: {}", sys.components().len());
+                for component in sys.components() {
+                    println!("Component: {:?}", component);
+                }
                 now = Instant::now();
             }
         }
@@ -173,6 +177,8 @@ fn send_stats(sys: &mut System, device: &HidDevice, gpu: &Device) -> Result<(), 
     sys.refresh_cpu();
     sys.refresh_memory();
     sys.refresh_processes();
+    sys.refresh_components_list();
+    sys.refresh_components();
     let total_mem_percentage = ((sys.used_memory() as f64 / sys.total_memory() as f64) * 100.0).round();
 
     let mut total_cpu_usage = 0.0;

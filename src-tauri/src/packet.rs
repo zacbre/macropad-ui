@@ -5,6 +5,7 @@ const PACKET_INIT: u8 = 0x69;
 #[repr(u8)]
 #[derive(PartialEq, Debug)]
 pub enum PacketHeader {
+    Temperature = 0x02,
     ChangeVolume = 0x04,
     GetVolume = 0x05,
     ForceVolume = 0x06,
@@ -15,6 +16,7 @@ pub enum PacketHeader {
 impl PacketHeader {
     pub fn from_u8(byte: u8) -> PacketHeader {
         match byte {
+            0x02 => PacketHeader::Temperature,
             0x04 => PacketHeader::ChangeVolume,
             0x05 => PacketHeader::GetVolume,
             0x06 => PacketHeader::ForceVolume,
@@ -25,6 +27,7 @@ impl PacketHeader {
 
     pub fn into_u8(&self) -> u8 {
         match self {
+            PacketHeader::Temperature => 0x02,
             PacketHeader::ChangeVolume => 0x04,
             PacketHeader::GetVolume => 0x05,
             PacketHeader::ForceVolume => 0x06,
