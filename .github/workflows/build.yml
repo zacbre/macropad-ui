@@ -2,7 +2,6 @@ name: Rust
 
 on:
   push:
-    branches: [ "main" ]
     tags:
       - v*
   pull_request:
@@ -25,10 +24,12 @@ jobs:
       uses: dtolnay/rust-toolchain@nightly
     - name: Install Tauri
       run: npm install
+    - name: Make Dist Folder
+      run: mkdir dist
+    - name: Copy VIA
+      run: xcopy public\via dist\via /E/H/Y/D/I
     - name: build-release
       run: npm run tauri build
-    - name: get version
-      run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
     - name: Upload Release Asset Executable
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
