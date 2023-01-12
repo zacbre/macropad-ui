@@ -24,12 +24,6 @@ jobs:
       uses: dtolnay/rust-toolchain@nightly
     - name: Install Tauri
       run: npm install
-    - name: Make Dist Folder
-      run: mkdir dist
-    - name: Copy VIA
-      run: xcopy public\via dist\via /E/H/Y/D/I
-    - name: List files
-      run: dir && dir dist
     - name: build-release
       run: npm run tauri build
     - name: Upload Release Asset Executable
