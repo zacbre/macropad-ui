@@ -113,6 +113,12 @@ struct Mapping {
 }
 
 #[tauri::command]
+fn get_volume_inc(state: tauri::State<State>) -> i32 {
+    let settings = state.settings.read().unwrap();
+    settings.increment
+}
+
+#[tauri::command]
 fn set_increment(state: tauri::State<State>, vol: i32) {
     {
         let mut sett = state.settings.write().unwrap();
@@ -265,7 +271,7 @@ fn main() {
             _ => ()
         })
         .system_tray(SystemTray::new().with_menu(tray_menu))
-        .invoke_handler(tauri::generate_handler![get_apps, set_mapping, get_connected_state, get_process_list, open_window, set_increment])
+        .invoke_handler(tauri::generate_handler![get_apps, set_mapping, get_connected_state, get_process_list, open_window, set_increment, get_volume_inc])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -22,7 +22,11 @@ async function handleVolumeInc() {
 async function getConnected() {
   connected.value = await invoke('get_connected_state');
 }
-getConnected()
+async function getVolumeInc() {
+  numberValue.value = await invoke('get_volume_inc');
+}
+getConnected();
+getVolumeInc();
 setInterval(getConnected, 2000);
 </script>
 
