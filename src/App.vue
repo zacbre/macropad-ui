@@ -6,7 +6,7 @@ import { RouterLink, RouterView } from "vue-router";
   <div class="container">
     <RouterView />
     <div class="copyright">
-      <p>Macropad-UI by <a href="https://github.com/zacbre" target="_blank">zacbre</a></p>
+      <p>Macropad-UI 1.0.2 by <a href="https://github.com/zacbre" target="_blank">zacbre</a></p>
     </div>
   </div>
 </template>

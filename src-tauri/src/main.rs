@@ -35,6 +35,7 @@ pub struct State {
 pub struct Settings {
     pub proc_list: HashMap<u16, String>,
     pub show_stats: bool,
+    pub increment: i32,
 }
 
 impl Settings {
@@ -88,6 +89,7 @@ impl Settings {
         Settings {
             proc_list: items,
             show_stats: true,
+            increment: 5,
         }
     }
 
@@ -108,6 +110,18 @@ impl Settings {
 struct Mapping {
     pub key: u16,
     pub value: String
+}
+
+#[tauri::command]
+fn set_increment(state: tauri::State<State>, vol: i32) {
+    {
+        let mut sett = state.settings.write().unwrap();
+        sett.increment = vol;
+    }
+    {
+        let settings = state.settings.read().unwrap();
+        settings.save_json();
+    }
 }
 
 #[tauri::command]
@@ -166,7 +180,11 @@ fn main() {
         .build()
         .unwrap();
 
-    auto.enable().unwrap();
+    if let Ok(enabled) = auto.is_enabled() {
+        if !enabled {
+            auto.enable().unwrap();
+        }
+    }
 
     // import the hashmap via json file.
     let settings = match Settings::import_json() {
@@ -247,7 +265,7 @@ fn main() {
             _ => ()
         })
         .system_tray(SystemTray::new().with_menu(tray_menu))
-        .invoke_handler(tauri::generate_handler![get_apps, set_mapping, get_connected_state, get_process_list, open_window])
+        .invoke_handler(tauri::generate_handler![get_apps, set_mapping, get_connected_state, get_process_list, open_window, set_increment])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

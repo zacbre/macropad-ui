@@ -30,22 +30,23 @@ fn get_volume(application: String) -> Result<f32, anyhow::Error> {
     Err(anyhow::Error::msg("Cannot find running application!"))
 }
 
-fn change_volume(application: String, volume: Volume, force: bool) -> Result<(), anyhow::Error> {
+fn change_volume(settings: Arc<RwLock<Settings>>, application: String, volume: Volume, force: bool) -> Result<(), anyhow::Error> {
     let applications = audio::enumerate_applications()?;
     let processes = applications.iter().filter(|p| p.name.to_lowercase() == application).collect::<Vec<&AudioEndpoint>>();
+    let set = settings.read().unwrap();
     for process in processes {
         let mut existing_volume = unsafe{process.volume.GetMasterVolume()?};
         println!("Volume of {}: {}", application, existing_volume);
         existing_volume = match &volume {
             x if x == &Volume::Up && force => 1.0,
             x if x == &Volume::Down && force => 0.0,
-            Volume::Up => existing_volume + 0.05,
-            Volume::Down => existing_volume - 0.05,
+            Volume::Up => existing_volume + set.increment as f32 * 0.01,
+            Volume::Down => existing_volume - set.increment as f32 * 0.01,
             _ => 0.00
         };
         if existing_volume > 1.0 {
             existing_volume = 1.0;
-        } else if existing_volume < 0.05 {
+        } else if existing_volume < set.increment as f32 * 0.01 {
             existing_volume = 0.0;
         }
         println!("Setting volume of {} to {}", application, existing_volume);
@@ -150,7 +151,7 @@ fn communicate_with_device(device: &HidDevice, gpu: &Device, settings: &Arc<RwLo
                             let application_title = format!("{}.exe", apps.proc_list[&application]);
                             println!("Changing volume {:?} on {}!", volume_up_or_down, application_title);
                             let force = p.header == PacketHeader::ForceVolume;
-                            change_volume(application_title, volume_up_or_down, force)?;
+                            change_volume(settings.clone(), application_title, volume_up_or_down, force)?;
                         }
                     },
                     _ => ()
